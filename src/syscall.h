@@ -27,6 +27,15 @@
 
 #define MAX_SYSCALL_NR UINT32_MAX
 #define SYSCALL_MAX_ARGS 6
+#define SYSCALL_SECCOMP 317 // for x86_64 only
+
+#define SECCOMP_FILTER_FLAG_TSYNC 1
+/* From man seccomp on SECCOMP_FILTER_FLAG_TSYNC:
+When adding a new filter, synchronize all other threads
+                     of the calling process to the same seccomp filter tree.
+                     A "filter tree" is the ordered list of filters attached
+                     to a thread.
+*/
 
 struct syscall_arg {
   const char* name;

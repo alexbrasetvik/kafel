@@ -18,6 +18,10 @@
 
 */
 
+#include <linux/filter.h>
+#include <linux/seccomp.h>
+#include <sys/prctl.h>
+
 #include "kafel.h"
 
 #include "parser.h"
@@ -133,4 +137,26 @@ KAFEL_API int kafel_compile_string(const char* source,
   int rv = kafel_compile(ctxt, prog);
   kafel_ctxt_destroy(&ctxt);
   return rv;
+}
+
+KAFEL_API int kafel_set_policy(const char* source, int sync_all_threads) {
+    struct sock_fprog prog;
+	kafel_ctxt_t ctxt = kafel_ctxt_create();
+	kafel_set_input_string(ctxt, source);
+	if (kafel_compile(ctxt, &prog)) {
+        fprintf(stderr, "policy compilation failed: %s\n", kafel_error_msg(ctxt));
+        kafel_ctxt_destroy(&ctxt);
+        return -1;
+    }
+    kafel_ctxt_destroy(&ctxt);
+
+    // seccomp requires that the process is in a mode where no new privs can be added
+    int rv = prctl(PR_SET_NO_NEW_PRIVS, 1, 0, 0, 0);
+    if(rv == 0) {
+        // There's no seccomp(), so need to go via syscall()
+        int seccomp_flags = sync_all_threads ? SECCOMP_FILTER_FLAG_TSYNC : 0;
+        rv = syscall(SYSCALL_SECCOMP, SECCOMP_SET_MODE_FILTER, seccomp_flags, &prog);
+    }
+    free(prog.filter);
+    return rv;
 }

@@ -94,6 +94,10 @@ int kafel_compile_string(const char* source, struct sock_fprog* prog);
  */
 const char* kafel_error_msg(const kafel_ctxt_t ctxt);
 
+
+
+int kafel_set_policy(const char* source, int sync_all_threads);
+
 #ifdef __cplusplus
 }
 #endif
